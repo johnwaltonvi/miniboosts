@@ -6,9 +6,6 @@ use miniboosts::{
 };
 
 
-use polars::prelude::*;
-
-
 // Toy example  (o/x are the pos/neg examples)
 // This partition is a decisiton tree for the unit prior.
 // 
@@ -35,13 +32,15 @@ use polars::prelude::*;
 
 #[test]
 fn naive_bayes_toy_test() {
-    let s1 = Series::new("x", &[10.0, 14.0, 15.0, 5.0, 3.0, 8.0, 12.0]);
-    let s2 = Series::new("y", &[5.0, 8.0, 3.0, 1.0, 9.0, 13.0, 11.0]);
-    let target = Series::new("class", &[1_f64, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0]);
-
-
-    let df = DataFrame::new(vec![s1, s2]).unwrap();
-    let sample = Sample::from_dataframe(df, target.clone()).unwrap();
+    let target = vec![1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0];
+    let sample = Sample::from_dense_columns(
+        vec![
+            ("x", vec![10.0, 14.0, 15.0, 5.0, 3.0, 8.0, 12.0]),
+            ("y", vec![5.0, 8.0, 3.0, 1.0, 9.0, 13.0, 11.0]),
+        ],
+        target.clone(),
+    )
+    .unwrap();
 
 
     let nbayes = GaussianNB::init();

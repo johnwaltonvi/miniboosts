@@ -129,7 +129,8 @@ impl LPModel {
                 &rhs,
                 &sense[..],
                 settings
-            );
+            )
+            .expect("failed to build Clarabel LP solver");
 
             solver.solve();
 
@@ -220,5 +221,4 @@ impl LPModel {
         rhs
     }
 }
-
 

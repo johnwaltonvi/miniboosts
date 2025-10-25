@@ -176,7 +176,8 @@ impl LPModel {
             &rhs[..],
             &cones,
             settings
-        );
+        )
+        .expect("failed to build Clarabel LP solver");
 
         solver.solve();
         // `size` is the first index of weights on hypotheses.
@@ -220,5 +221,4 @@ impl LPModel {
         self.weights.iter().copied()
     }
 }
-
 

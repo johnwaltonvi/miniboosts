@@ -6,7 +6,6 @@ use std::ops::Index;
 use std::mem;
 use std::cmp::Ordering;
 
-use polars::prelude::*;
 use rayon::prelude::*;
 use super::feature_struct::*;
 
@@ -143,34 +142,52 @@ impl Sample {
     }
 
 
-    /// Convert [`DataFrame`] and [`Series`] to `Sample`.
-    /// This method takes the ownership of the given pair of 
-    /// `data` and `target`.
-    pub fn from_dataframe(data: DataFrame, target: Series)
-        -> io::Result<Self>
+    /// Construct a sample from dense feature columns.
+    /// Each column must have the same length as `target`.
+    pub fn from_dense_columns<N>(
+        columns: Vec<(N, Vec<f64>)>,
+        target: Vec<f64>
+    ) -> io::Result<Self>
+        where N: Into<String>
     {
-        let (n_sample, n_feature) = data.shape();
-        let target = target.f64()
-            .expect("The target is not a dtype f64")
-            .into_iter()
-            .collect::<Option<Vec<_>>>()
-            .unwrap();
+        let n_sample = target.len();
 
-        let features = data.get_columns()
-            .into_par_iter()
-            .map(|series| 
-                Feature::Dense(DenseFeature::from_series(series))
-            )
+        let mut dense_features = Vec::with_capacity(columns.len());
+        for (index, (name, values)) in columns.into_iter().enumerate() {
+            if values.len() != n_sample {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidInput,
+                    format!(
+                        "feature at index {index} has {} entries; expected {n_sample}",
+                        values.len()
+                    ),
+                ));
+            }
+
+            let name = name.into();
+            let mut feature = DenseFeature::new(name.clone());
+            feature.sample = values;
+            dense_features.push(feature);
+        }
+
+        let features = dense_features.into_iter()
+            .map(Feature::Dense)
             .collect::<Vec<_>>();
 
         let name_to_index = features.iter()
             .enumerate()
             .map(|(i, f)| (f.name().to_string(), i))
             .collect::<HashMap<_, _>>();
+        let n_feature = name_to_index.len();
 
         let sample = Self {
-            name_to_index, features, target, n_sample, n_feature,
+            name_to_index,
+            features,
+            target,
+            n_sample,
+            n_feature,
         };
+
         Ok(sample)
     }
 

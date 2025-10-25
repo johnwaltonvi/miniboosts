@@ -151,7 +151,8 @@ impl QPModel {
                 &rhs,
                 &sense[..],
                 settings
-            );
+            )
+            .expect("failed to build Clarabel QP solver");
 
             solver.solve();
             assert!(
@@ -295,5 +296,4 @@ impl QPModel {
         self.weights.iter().copied()
     }
 }
-
 

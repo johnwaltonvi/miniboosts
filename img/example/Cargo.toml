@@ -7,4 +7,3 @@ edition = "2021"
 
 [dependencies]
 miniboosts = { path = "./../../../miniboosts", features = ["extended"] }
-polars     = "0.27.0"

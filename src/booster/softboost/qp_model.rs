@@ -137,7 +137,8 @@ impl QPModel {
                 &rhs,
                 &sense[..],
                 settings
-            );
+            )
+            .expect("failed to build Clarabel QP solver");
 
             solver.solve();
             let solution = &solver.solution.x[..];
@@ -370,7 +371,8 @@ impl QPModel {
             &rhs,
             &sense[..],
             settings
-        );
+        )
+        .expect("failed to build Clarabel LP solver");
 
         solver.solve();
         let start = 1 + 2*self.n_examples;
@@ -378,5 +380,3 @@ impl QPModel {
         solution.into_iter()
     }
 }
-
-

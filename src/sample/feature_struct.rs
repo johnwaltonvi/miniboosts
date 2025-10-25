@@ -1,4 +1,3 @@
-use polars::prelude::*;
 use std::ops::Index;
 use std::slice::Iter;
 
@@ -239,21 +238,6 @@ impl DenseFeature {
     pub fn iter(&self) -> Iter<'_, f64> {
         self.sample.iter()
     }
-
-
-    /// Convert `polars::Series` into `DenseFeature`.
-    pub fn from_series(series: &Series) -> Self {
-        let name = series.name().to_string();
-
-        let sample = series.f64()
-            .expect("The series is not a dtype f64")
-            .into_iter()
-            .collect::<Option<Vec<_>>>()
-            .unwrap();
-
-        Self { name, sample, }
-    }
-
 
     fn into_target(self) -> Vec<f64> {
         self.sample
