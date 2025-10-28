@@ -8,7 +8,7 @@ use serde::{Serialize, Deserialize};
 use std::fmt;
 use std::cmp::Ordering;
 use std::ops::{Mul, Add};
-use std::collections::{HashSet, HashMap};
+use std::collections::{hash_map::Entry, HashMap, HashSet};
 
 use crate::Sample;
 use super::bin::*;
@@ -259,6 +259,8 @@ fn split_by_edge(pack: Vec<(Bin, LabelToWeight)>) -> (f64, Score) {
 
 
 fn split_by_gini(pack: Vec<(Bin, LabelToWeight)>) -> (f64, Score) {
+    const ZERO_WEIGHT_TOLERANCE: f64 = 1e-12;
+
     let weight_sum = pack.iter()
         .map(|(_, mp)| mp.values().sum::<f64>())
         .sum::<f64>();
@@ -285,12 +287,19 @@ fn split_by_gini(pack: Vec<(Bin, LabelToWeight)>) -> (f64, Score) {
             let entry = left_weight.entry(y).or_insert(0f64);
             *entry += w;
             left_weight_sum += w;
-            let entry = right_weight.get_mut(&y).unwrap();
-            *entry -= w;
+            match right_weight.entry(y) {
+                Entry::Occupied(mut occupied) => {
+                    let value = occupied.get_mut();
+                    *value -= w;
+                    if value.abs() <= ZERO_WEIGHT_TOLERANCE {
+                        occupied.remove_entry();
+                    }
+                },
+                Entry::Vacant(_) => { /* Right side already exhausted for this label. */ },
+            }
             right_weight_sum -= w;
 
 
-            if *entry <= 0f64 { right_weight.remove(&y); }
         }
         let lp = left_weight_sum / weight_sum;
         let rp = (1f64 - lp).max(0f64);
