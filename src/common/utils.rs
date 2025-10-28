@@ -289,7 +289,15 @@ pub fn normalize(items: &mut [f64]) {
         .map(|it| it.abs())
         .sum::<f64>();
 
-    assert_ne!(z, 0.0, "{items:?}");
+    if z == 0.0 {
+        let fallback = if items.is_empty() {
+            return;
+        } else {
+            1.0 / items.len() as f64
+        };
+        items.par_iter_mut().for_each(|item| *item = fallback);
+        return;
+    }
 
     items.par_iter_mut()
         .for_each(|item| { *item /= z; });
